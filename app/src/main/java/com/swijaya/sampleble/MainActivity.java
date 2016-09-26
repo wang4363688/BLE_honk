@@ -55,6 +55,7 @@ public class MainActivity extends Activity {
     private Criteria criteria = new Criteria();
     private String VEHICLES = "V";
     private String PEDESTRIAN = "P";
+    private double latShow, lngShow, speedShow, bearingShow;
     /*GPS Info Formatting
     * speed:   4 charaters
     * bearing: 3 charaters
@@ -214,6 +215,7 @@ public class MainActivity extends Activity {
         switch (id) {
             case R.id.action_settings:
                 stopTimer();
+                stopScanning();
                 return true;
             case R.id.action_advertise:
                 startTimer();
@@ -307,13 +309,19 @@ public class MainActivity extends Activity {
 
         ScanRecord record = result.getScanRecord();
         String gpsInfo = new String(record.getServiceData(SAMPLE_UUID), Charset.forName("UTF-8"));
+        speedShow = Double.parseDouble(gpsInfo.substring(2,6));
+        bearingShow = Double.parseDouble(gpsInfo.substring(6,9));
+        latShow = Double.parseDouble(gpsInfo.substring(9,13)) + 39;
+        lngShow = Double.parseDouble(gpsInfo.substring(13,16)) + 116;
+        String gpsShow = "speed: "+ speedShow  + " bearing:" + bearingShow + "\nlongitude:" +
+                lngShow + " latitude:" + latShow;
+
         Log.d(TAG, "Record advertise flags: 0x" + Integer.toHexString(record.getAdvertiseFlags()));
         Log.d(TAG, "Record Tx power level: " + record.getTxPowerLevel());
         Log.d(TAG, "Record device name: " + record.getDeviceName());
         Log.d(TAG, "Record service UUIDs: " + record.getServiceUuids());
         Log.d(TAG, "Record service data: " + record.getServiceData());
-        NewlyBluetoothDevice bleDevice = new NewlyBluetoothDevice(device.getAddress(),
-                gpsInfo);
+        NewlyBluetoothDevice bleDevice = new NewlyBluetoothDevice(gpsShow, gpsInfo);
         mLeDeviceListAdapter.addDevice(bleDevice);
         mLeDeviceListAdapter.notifyDataSetChanged();
     }
@@ -481,7 +489,7 @@ public class MainActivity extends Activity {
             sLongitude="111.11111";
         }
         //16 Charaters in total
-        String rename = Flag + "3";         //所有WHIP结构均以“P”或“V”开头；时间，保留分和秒，共4位 +getDate()
+        String rename = Flag + "1";         //所有WHIP结构均以“P”或“V”开头；时间，保留分和秒，共4位 +getDate()
         rename += String.valueOf(dfSpeed.format(speed));//速度保留一位小数，算小数点4位，单位m/s
         rename += String.valueOf(dfBear.format(bearing));//方向角取整，3位
         rename += sLatitude.substring(sLatitude.indexOf(".")+1,sLatitude.indexOf(".")+5);//纬度，只显示小数点后4位
