@@ -26,8 +26,8 @@ public class LeDeviceListAdapter extends BaseAdapter{
         mInflator = LayoutInflater.from(context);
     }
     public void addDevice(NewlyBluetoothDevice device) {
-        if (!macAddress.contains(device.getMacAddress())){
-            macAddress.add(device.getMacAddress());
+        if (!macAddress.contains(device.getAdInfo().substring(0,2))){
+            macAddress.add(device.getAdInfo().substring(0,2));
             mLeDevices.add(device);
         }else {
             mLeDevices.clear();

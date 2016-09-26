@@ -300,29 +300,20 @@ public class MainActivity extends Activity {
         Log.d(TAG, "processScanResult: " + result);
 
         BluetoothDevice device = result.getDevice();
-//        if (device != null && device.getAddress() != null){
-//            if (deviceAddress.contains(device.getAddress())){
-//                deviceAddress.add(device.getAddress());
-//                Log.d(TAG, "Device name: " + device.getName());
-//                Log.d(TAG, "Device address: " + device.getAddress());
-//                Log.d(TAG, "Device service UUIDs: " + device.getUuids());
-//            }else {
-//                deviceAddress.add(device.getAddress());
-//            }
-//        }
 
         Log.d(TAG, "Device name: " + device.getName());
         Log.d(TAG, "Device address: " + device.getAddress());
         Log.d(TAG, "Device service UUIDs: " + device.getUuids());
 
         ScanRecord record = result.getScanRecord();
+        String gpsInfo = new String(record.getServiceData(SAMPLE_UUID), Charset.forName("UTF-8"));
         Log.d(TAG, "Record advertise flags: 0x" + Integer.toHexString(record.getAdvertiseFlags()));
         Log.d(TAG, "Record Tx power level: " + record.getTxPowerLevel());
         Log.d(TAG, "Record device name: " + record.getDeviceName());
         Log.d(TAG, "Record service UUIDs: " + record.getServiceUuids());
         Log.d(TAG, "Record service data: " + record.getServiceData());
         NewlyBluetoothDevice bleDevice = new NewlyBluetoothDevice(device.getAddress(),
-                new String(record.getServiceData(SAMPLE_UUID), Charset.forName("UTF-8")));
+                gpsInfo);
         mLeDeviceListAdapter.addDevice(bleDevice);
         mLeDeviceListAdapter.notifyDataSetChanged();
     }
@@ -490,7 +481,7 @@ public class MainActivity extends Activity {
             sLongitude="111.11111";
         }
         //16 Charaters in total
-        String rename = Flag;         //所有WHIP结构均以“P”或“V”开头；时间，保留分和秒，共4位 +getDate()
+        String rename = Flag + "3";         //所有WHIP结构均以“P”或“V”开头；时间，保留分和秒，共4位 +getDate()
         rename += String.valueOf(dfSpeed.format(speed));//速度保留一位小数，算小数点4位，单位m/s
         rename += String.valueOf(dfBear.format(bearing));//方向角取整，3位
         rename += sLatitude.substring(sLatitude.indexOf(".")+1,sLatitude.indexOf(".")+5);//纬度，只显示小数点后4位
