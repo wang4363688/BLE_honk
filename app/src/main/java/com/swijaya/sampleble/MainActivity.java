@@ -1,5 +1,6 @@
 package com.swijaya.sampleble;
 
+import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -17,6 +18,10 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -28,6 +33,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.nio.charset.Charset;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -37,6 +43,26 @@ import java.util.TimerTask;
 
 
 public class MainActivity extends Activity {
+    //GPS相关
+    private LocationManager mLocationManager;
+    private Location mLocation;
+    private double lat;
+    private double lng;
+    private double time;
+    private double speed;
+    private double bearing;
+    String provider;
+    private Criteria criteria = new Criteria();
+    private String VEHICLES = "V";
+    private String PEDESTRIAN = "P";
+    /*GPS Info Formatting
+    * speed:   4 charaters
+    * bearing: 3 charaters
+    * lat/lng: 8 charaters
+    */
+    DecimalFormat dfSpeed = new DecimalFormat("00.0");
+    DecimalFormat dfBear = new DecimalFormat("000");
+    DecimalFormat dfLa = new DecimalFormat("0.00000");
 
     private static final String TAG = "SampleBLE";
 
@@ -72,6 +98,11 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        provider = mLocationManager.getBestProvider(criteria, true); // 获取GPS信息
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, mLocationListener);
+        mLocation = mLocationManager.getLastKnownLocation(provider);
 
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
@@ -83,12 +114,11 @@ public class MainActivity extends Activity {
         ListView deviceList = (ListView) findViewById(R.id.device_list);
         deviceList.setAdapter(mLeDeviceListAdapter);
 
-        timer = new Timer();
-        timerTask = new UpdateTask();
-        mHandler = new Handler(){
-            public void handleMessage(Message msg){
+
+        mHandler = new Handler() {
+            public void handleMessage(Message msg) {
                 super.handleMessage(msg);
-                if (msg.what == 0x123){
+                if (msg.what == 0x123) {
                     //do something here
                     //Toast.makeText(MainActivity.this, "timer", Toast.LENGTH_SHORT).show();
                     startAdvertising();
@@ -132,7 +162,7 @@ public class MainActivity extends Activity {
             mBleAdvertiseSettingsBuilder = new AdvertiseSettings.Builder()
                     .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
                     .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-                    .setTimeout(DEFAULT_ADVERTISE_TIMEOUT)
+                    //.setTimeout(DEFAULT_ADVERTISE_TIMEOUT)
                     .setConnectable(false);
             mBleAdvertiseDataBuilder = new AdvertiseData.Builder()
                     .setIncludeDeviceName(false)
@@ -183,6 +213,7 @@ public class MainActivity extends Activity {
 
         switch (id) {
             case R.id.action_settings:
+                stopTimer();
                 return true;
             case R.id.action_advertise:
                 startTimer();
@@ -202,8 +233,11 @@ public class MainActivity extends Activity {
             return;
         }
 
-        //数字的话17位刚刚不会报错
-        serviceData = getDate().getBytes();
+        /*数字的话17位刚刚不会报错
+        * 构建GPS广播包
+        */
+        serviceData = updateGpsInfo(VEHICLES).getBytes();
+
 
         AdvertiseSettings advertiseSettings = new AdvertiseSettings.Builder()
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
@@ -337,7 +371,7 @@ public class MainActivity extends Activity {
 
         @Override
         public void onBatchScanResults(List<ScanResult> results) {
-            Log.w("batch","more devices");
+            Log.w("batch", "more devices");
             for (ScanResult result : results) {
                 processScanResult(result);
             }
@@ -367,7 +401,7 @@ public class MainActivity extends Activity {
         }
     };
 
-    public static final String getDate(){
+    public static final String getDate() {
         Calendar cal = Calendar.getInstance();
         java.text.SimpleDateFormat sdf = new SimpleDateFormat("ss");
         String cdate = sdf.format(cal.getTime());
@@ -382,15 +416,85 @@ public class MainActivity extends Activity {
         }
     }
 
-    public void startTimer(){
-        if(isActive){
-            if ((timer != null) && (timerTask != null)){
+    public void startTimer() {
+        if (isActive) {
+            timer = new Timer();
+            timerTask = new UpdateTask();
+            if ((timer != null) && (timerTask != null)) {
                 timer.schedule(timerTask, 0, 2000);
                 isActive = false;
             }
-        }else{
+        } else {
             Toast.makeText(MainActivity.this, "广播已开启", Toast.LENGTH_SHORT).show();
         }
     }
 
+    public void stopTimer() {
+        if ((timer != null) && (timerTask != null)) {
+            timer.cancel();
+            timerTask.cancel();
+//            timer = null;
+//            timerTask = null;
+            isActive = true;
+        }
+    }
+
+    public final LocationListener mLocationListener = new LocationListener() {
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+            updateToNewLocation(null);
+        }
+
+        @Override
+        public void onLocationChanged(Location location) {
+            updateToNewLocation(location);
+        }
+    };
+
+    private Location updateToNewLocation(Location location) {
+        if (location != null) {
+            lat = location.getLatitude();
+            lng = location.getLongitude();
+            time = location.getTime();
+            speed = location.getSpeed();
+            bearing = location.getBearing();
+            //String timeStamp = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss").format(time);
+            if (lat < 0.1 || lng < 0.1) {
+                speed = 11.1f;
+                lat = 111.000000000;
+                lng = 111.11111111;
+                bearing = 111;
+            }
+        } else {
+            Toast.makeText(MainActivity.this, "当前无GPS信号，请移动到空旷地带！", Toast.LENGTH_SHORT).show();
+        }
+        return location;
+    }
+
+    private String updateGpsInfo(String Flag){
+        // 以下均为本机的时间以及gps信息
+        String sLatitude=String.valueOf(dfLa.format(lat));
+        String sLongitude=String.valueOf(dfLa.format(lng));
+        //没有gps信号的情况下不会闪退
+        if(sLatitude=="0.0"||sLongitude=="0.0"){
+            sLatitude="111.00000";
+            sLongitude="111.11111";
+        }
+        //16 Charaters in total
+        String rename = Flag;         //所有WHIP结构均以“P”或“V”开头；时间，保留分和秒，共4位 +getDate()
+        rename += String.valueOf(dfSpeed.format(speed));//速度保留一位小数，算小数点4位，单位m/s
+        rename += String.valueOf(dfBear.format(bearing));//方向角取整，3位
+        rename += sLatitude.substring(sLatitude.indexOf(".")+1,sLatitude.indexOf(".")+5);//纬度，只显示小数点后4位
+        rename += sLongitude.substring(sLongitude.indexOf(".")+1,sLongitude.indexOf(".")+5);//经度，只显示小数点后4位
+        return rename;
+    }
 }

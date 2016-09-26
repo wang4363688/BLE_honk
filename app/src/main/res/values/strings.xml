@@ -4,7 +4,7 @@
     <string name="app_name">SampleBLE</string>
     <string name="hello_world">Hello world!</string>
 
-    <string name="action_settings">Settings</string>
+    <string name="action_settings">Stop Advertising</string>
     <string name="action_advertise">Advertise</string>
     <string name="action_scan">Scan</string>
     <string name="unknown_device">Unknown Device</string>
