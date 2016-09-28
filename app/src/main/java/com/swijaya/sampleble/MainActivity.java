@@ -69,11 +69,10 @@ public class MainActivity extends Activity {
 
     private static final int REQUEST_ENABLE_BT = 1;
 
-    private static final int DEFAULT_ADVERTISE_TIMEOUT = 10 * 1000;
+    private static final int DEFAULT_ADVERTISE_INTERVAL = 1 * 1000;
+    private static final int INTERVAL_BETWEEN_ONANDOFF = 500;
     private static final ParcelUuid SAMPLE_UUID =
             ParcelUuid.fromString("0000FE00-0000-1000-8000-00805F9B34FB");
-
-    private static final long DEFAULT_SCAN_PERIOD = 25 * 1000;
 
     private LeDeviceListAdapter mLeDeviceListAdapter;
     private ArrayList<String> deviceAddress = new ArrayList<String>();
@@ -124,7 +123,7 @@ public class MainActivity extends Activity {
                     //Toast.makeText(MainActivity.this, "timer", Toast.LENGTH_SHORT).show();
                     startAdvertising();
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(INTERVAL_BETWEEN_ONANDOFF);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -215,6 +214,11 @@ public class MainActivity extends Activity {
         switch (id) {
             case R.id.action_settings:
                 stopTimer();
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 stopScanning();
                 return true;
             case R.id.action_advertise:
@@ -295,6 +299,7 @@ public class MainActivity extends Activity {
         if (mBluetoothLeScanner != null) {
             Log.d(TAG, "Stop scanning.");
             mBluetoothLeScanner.stopScan(mBleScanCallback);
+            Toast.makeText(MainActivity.this, "扫描已关闭", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -311,8 +316,8 @@ public class MainActivity extends Activity {
         String gpsInfo = new String(record.getServiceData(SAMPLE_UUID), Charset.forName("UTF-8"));
         speedShow = Double.parseDouble(gpsInfo.substring(2,6));
         bearingShow = Double.parseDouble(gpsInfo.substring(6,9));
-        latShow = Double.parseDouble(gpsInfo.substring(9,13)) + 39;
-        lngShow = Double.parseDouble(gpsInfo.substring(13,16)) + 116;
+        latShow = Double.parseDouble("0." + gpsInfo.substring(9,13)) + 39;
+        lngShow = Double.parseDouble("0." + gpsInfo.substring(13,16)) + 116;
         String gpsShow = "speed: "+ speedShow  + " bearing:" + bearingShow + "\nlongitude:" +
                 lngShow + " latitude:" + latShow;
 
@@ -420,7 +425,7 @@ public class MainActivity extends Activity {
             timer = new Timer();
             timerTask = new UpdateTask();
             if ((timer != null) && (timerTask != null)) {
-                timer.schedule(timerTask, 0, 2000);
+                timer.schedule(timerTask, 0, DEFAULT_ADVERTISE_INTERVAL);
                 isActive = false;
             }
         } else {
@@ -435,6 +440,7 @@ public class MainActivity extends Activity {
 //            timer = null;
 //            timerTask = null;
             isActive = true;
+            Toast.makeText(MainActivity.this, "广播已关闭", Toast.LENGTH_SHORT).show();
         }
     }
 
