@@ -2,6 +2,7 @@ package com.swijaya.sampleble;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,10 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Created by Murphy on 16/9/11.
@@ -18,6 +23,7 @@ public class LeDeviceListAdapter extends BaseAdapter{
     //private ArrayList<BluetoothDevice> mLeDevices;
     private ArrayList<String> macAddress = new ArrayList<String>();
     private ArrayList<NewlyBluetoothDevice> mLeDevices;
+    private HashMap<String, NewlyBluetoothDevice> map = new HashMap<>();
     private LayoutInflater mInflator;
     public LeDeviceListAdapter(Context context) {
         super();
@@ -26,14 +32,25 @@ public class LeDeviceListAdapter extends BaseAdapter{
         mInflator = LayoutInflater.from(context);
     }
     public void addDevice(NewlyBluetoothDevice device) {
-        if (!macAddress.contains(device.getAdInfo().substring(0,2))){
-            macAddress.add(device.getAdInfo().substring(0,2));
-            mLeDevices.add(device);
-        }else {
-            mLeDevices.clear();
-            mLeDevices.add(device);
+        String did =device.getAdInfo().substring(0,2);
 
+        map.put(did, device);
+        Iterator iterator = map.keySet().iterator();
+        mLeDevices.clear();
+        while (iterator.hasNext()){
+            String iDid = iterator.next().toString();
+            mLeDevices.add(map.get(iDid));
         }
+//        Log.d("TAG", String.valueOf(map.keySet().size() + "  " + did));
+//        if (!macAddress.contains(did){
+//            macAddress.add(device.getAdInfo().substring(0,2));
+//            mLeDevices.add(device);
+//        }else {
+//
+//            mLeDevices.clear();
+//            mLeDevices.add(device);
+//
+//        }
 //        if(!mLeDevices.contains(device)) {
 //            mLeDevices.add(device);
 //        }
@@ -60,6 +77,9 @@ public class LeDeviceListAdapter extends BaseAdapter{
     public View getView(int i, View view, ViewGroup viewGroup) {
         ViewHolder viewHolder;
         // General ListView optimization code.
+//        Log.d("TAG", "get view");
+//        Log.d("TAG", "map s" + map.keySet().size());
+
         if (view == null) {
             view = mInflator.inflate(R.layout.listitem_device, null);
             viewHolder = new ViewHolder();

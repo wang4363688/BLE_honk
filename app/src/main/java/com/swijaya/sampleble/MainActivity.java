@@ -69,8 +69,8 @@ public class MainActivity extends Activity {
 
     private static final int REQUEST_ENABLE_BT = 1;
 
-    private static final int DEFAULT_ADVERTISE_INTERVAL = 1 * 1000;
-    private static final int INTERVAL_BETWEEN_ONANDOFF = 500;
+    private static final int DEFAULT_ADVERTISE_INTERVAL = 500;
+    private static final int INTERVAL_BETWEEN_ONANDOFF = 300;
     private static final ParcelUuid SAMPLE_UUID =
             ParcelUuid.fromString("0000FE00-0000-1000-8000-00805F9B34FB");
 
@@ -318,7 +318,7 @@ public class MainActivity extends Activity {
         bearingShow = Double.parseDouble(gpsInfo.substring(6,9));
         latShow = Double.parseDouble("0." + gpsInfo.substring(9,13)) + 39;
         lngShow = Double.parseDouble("0." + gpsInfo.substring(13,16)) + 116;
-        String gpsShow = "speed: "+ speedShow  + " bearing:" + bearingShow + "\nlongitude:" +
+        String gpsShow = "speed: "+ speedShow  + "m/s  bearing:" + bearingShow + "degree\nlongitude:" +
                 lngShow + " latitude:" + latShow;
 
         Log.d(TAG, "Record advertise flags: 0x" + Integer.toHexString(record.getAdvertiseFlags()));
@@ -495,7 +495,7 @@ public class MainActivity extends Activity {
             sLongitude="111.11111";
         }
         //16 Charaters in total
-        String rename = Flag + "1";         //所有WHIP结构均以“P”或“V”开头；时间，保留分和秒，共4位 +getDate()
+        String rename = Flag + "2";         //所有WHIP结构均以“P”或“V”开头；时间，保留分和秒，共4位 +getDate()
         rename += String.valueOf(dfSpeed.format(speed));//速度保留一位小数，算小数点4位，单位m/s
         rename += String.valueOf(dfBear.format(bearing));//方向角取整，3位
         rename += sLatitude.substring(sLatitude.indexOf(".")+1,sLatitude.indexOf(".")+5);//纬度，只显示小数点后4位
