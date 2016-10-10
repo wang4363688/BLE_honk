@@ -495,7 +495,7 @@ public class MainActivity extends Activity {
             sLongitude="111.11111";
         }
         //16 Charaters in total
-        String rename = Flag + "2";         //所有WHIP结构均以“P”或“V”开头；时间，保留分和秒，共4位 +getDate()
+        String rename = Flag + "1";         //所有WHIP结构均以“P”或“V”开头；时间，保留分和秒，共4位 +getDate()
         rename += String.valueOf(dfSpeed.format(speed));//速度保留一位小数，算小数点4位，单位m/s
         rename += String.valueOf(dfBear.format(bearing));//方向角取整，3位
         rename += sLatitude.substring(sLatitude.indexOf(".")+1,sLatitude.indexOf(".")+5);//纬度，只显示小数点后4位
